@@ -1,0 +1,455 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    //---------------------------------------------------------------------------
+    // Storage Account
+    //---------------------------------------------------------------------------
+    "storageAccountName": {
+      "type": "string",
+      "minLength": 5,
+      "maxLength": 23
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    },
+    "storageAccountKind": {
+      "type": "string",
+      "defaultValue": "Storage",
+      "allowedValues": [
+        "Storage",
+        "BlobStorage"
+      ],
+      "metadata": {
+        "description": "Storage Account kind"
+      }
+    },
+    //---------------------------------------------------------------------------
+    // SQL Server resources
+    //---------------------------------------------------------------------------
+    "sqlserverName": {
+      "type": "string",
+      "minLength": 3
+    },
+    "sqlserverAdminLogin": {
+      "type": "string",
+      "minLength": 3
+    },
+    "sqlserverAdminLoginPassword": {
+      "type": "securestring"
+    },
+    "sqlServerFirewallIpStart": {
+      "type": "string",
+      "defaultValue": "0.0.0.0"
+    },
+    "sqlServerFirewallIpEnd": {
+      "type": "string",
+      "defaultValue": "0.0.0.0"
+    },
+    "sqlDbCollation": {
+      "type": "string",
+      "defaultValue": "SQL_Latin1_General_CP1_CI_AS"
+    },
+    //
+    // Azure SQL Database
+    //
+    "sqlDbName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sqlDbCollationDbEdition": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "Standard",
+        "Premium"
+      ]
+    },
+    "sqlDbRequestedServiceObjectiveName": {
+      "type": "string",
+      "defaultValue": "Basic",
+      "allowedValues": [
+        "Basic",
+        "S0",
+        "S1",
+        "S2",
+        "P1",
+        "P2",
+        "P3"
+      ],
+      "metadata": {
+        "description": "Describes the performance level for Edition"
+      }
+    },
+    "sqlDbMaxSizeBytes": {
+      "type": "string",
+      "defaultValue": "1073741824"
+    },
+    // Azure SQL Data Warehouse
+    "sqlDWName": {
+      "type": "string"
+    },
+    "sqlDwRequestedServiceObjective": {
+      "type": "string",
+      "defaultValue": "DW100"
+    },
+    //---------------------------------------------------------------------------
+    // Data Factory
+    //---------------------------------------------------------------------------
+    "dataFactoryApiVersion": {
+      "type": "string",
+      "defaultValue": "2015-01-01-preview"
+    },
+    "dataFactoryName": {
+      "type": "string"
+    },
+    //---------------------------------------------------------------------------
+    // Automation Account
+    //---------------------------------------------------------------------------
+    "automationAccountName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the Azure Automation account to deploy to."
+      }
+    },
+    "automationSku": {
+      "type": "string",
+      "defaultValue": "Free"
+    },
+    "automationLocation": {
+      "type": "string",
+      "defaultValue": "southcentralus",
+      "allowedValues": [
+        "southcentralus",
+        "eastus2",
+        "westcentralus"
+      ]
+    },
+    //---------------------------------------------------------------------------
+    // Windows VM
+    //---------------------------------------------------------------------------
+    "windowsVmName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "windowsVmAdminUserName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "windowsVmAdminPassword": {
+      "type": "securestring"
+    },
+    "windowsVmWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "2016-Nano-Server",
+        "2016-Datacenter-with-Containers",
+        "2016-Datacenter"
+      ]
+    },
+    "windowsVmVmSize": {
+      "type": "string",
+      "defaultValue": ""
+    },
+    "vnetName": {
+      "type": "string"
+    },
+    "vnetPrefix": {
+      "type": "string"
+    },
+    "vnetSubnetName": {
+      "type": "string"
+    },
+    "vnetSubnetPrefix": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "windowsVmImagePublisher": "MicrosoftWindowsServer",
+    "windowsVmImageOffer": "WindowsServer",
+    "windowsVmOSDiskName": "windowsVmOSDisk",
+    "windowsVmVmSize": "Standard_D2_v2",
+    "windowsVmVnetID": "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]",
+    "windowsVmSubnetRef": "[concat(variables('windowsVmVnetID'), '/subnets/', parameters('vnetSubnetName'))]",
+    "windowsVmStorageAccountContainerName": "vhds",
+    "windowsVmNicName": "[concat(parameters('windowsVmName'), 'NetworkInterface')]"
+  },
+  "resources": [
+    //---------------------------------------------------------------------------
+    // Storage Account
+    //---------------------------------------------------------------------------
+    {
+      "name": "[parameters('storageAccountName')]",
+      "type": "Microsoft.Storage/storageAccounts",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-01-01",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "dependsOn": [],
+      "tags": {
+        "displayName": "inputStorageAccount"
+      },
+      "kind": "[parameters('storageAccountKind')]"
+    },
+    //---------------------------------------------------------------------------
+    // SQL Server
+    //---------------------------------------------------------------------------
+    {
+      "name": "[parameters('sqlserverName')]",
+      "type": "Microsoft.Sql/servers",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2014-04-01-preview",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "sqlserver"
+      },
+      "properties": {
+        "administratorLogin": "[parameters('sqlserverAdminLogin')]",
+        "administratorLoginPassword": "[parameters('sqlserverAdminLoginPassword')]"
+      },
+      "resources": [
+        // auditing and threat detectgion
+        {
+          "apiVersion": "2014-04-01-preview",
+          "type": "auditingPolicies",
+          "name": "DefaultAuditPolicy",
+          "dependsOn": [
+            "[parameters('sqlserverName')]",
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]"
+          ],
+          "properties": {
+            "auditingState": "Enabled",
+            "storageAccountName": "[parameters('storageAccountName')]",
+            "storageAccountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+            "storageAccountResourceGroupName": "[resourceGroup().name]",
+            "storageAccountSubscriptionId": "[subscription().subscriptionId]",
+            "eventTypesToAudit": "All"
+          }
+        },
+        {
+          "apiVersion": "2015-05-01-preview",
+          "type": "securityAlertPolicies",
+          "name": "DefaultSecurityAlert",
+          "dependsOn": [
+            "[parameters('sqlserverName')]",
+            "[concat('Microsoft.Storage/storageAccounts/', parameters('storageAccountName'))]",
+            "[concat('Microsoft.Sql/servers/', parameters('sqlserverName'), '/auditingPolicies/DefaultAuditPolicy')]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "disabledAlerts": "",
+            //"emailAddresses": "[variables('emailaddresses')]",
+            "emailAccountAdmins": "Enabled",
+            "retentionDays": "10",
+            "storageEndpoint": "[concat('https://', parameters ('storageAccountName'), '.blob.core.windows.net/')]",
+            "storageAccountAccessKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]"
+          }
+        },
+        // server-level firewall rule
+        {
+          "name": "AllowAllAzureIps",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlserverName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "0.0.0.0",
+            "endIpAddress": "0.0.0.0"
+          }
+        },
+        // server-level firewall rule
+        {
+          "name": "ArmTemplateRule",
+          "type": "firewallrules",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlserverName'))]"
+          ],
+          "properties": {
+            "startIpAddress": "[parameters('sqlServerFirewallIpStart')]",
+            "endIpAddress": "[parameters('sqlServerFirewallIpEnd')]"
+          }
+        },
+        // Azure SQL Database
+        {
+          "name": "[parameters('sqlDbName')]",
+          "type": "databases",
+          "location": "[resourceGroup().location]",
+          "apiVersion": "2014-04-01-preview",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlserverName'))]"
+          ],
+          "tags": {
+            "displayName": "[parameters('sqlDbName')]"
+          },
+          "properties": {
+            "collation": "[parameters('sqlDbCollation')]",
+            "edition": "[parameters('sqlDbCollationDbEdition')]",
+            "maxSizeBytes": "[parameters('sqlDbMaxSizeBytes')]",
+            "requestedServiceObjectiveName": "[parameters('sqlDbRequestedServiceObjectiveName')]"
+          }
+        },
+        // Azure SQL Data Warehouse
+        {
+          "type": "databases",
+          "apiVersion": "2014-04-01-preview",
+          "location": "[resourceGroup().location]",
+          "name": "[parameters('sqlDWName')]",
+          "kind": "v12.0,user,datawarehouse",
+          "dependsOn": [
+            "[resourceId('Microsoft.Sql/servers', parameters('sqlserverName'))]"
+          ],
+          "properties": {
+            "edition": "DataWarehouse",
+            "requestedServiceObjectiveName": "[parameters('sqlDwRequestedServiceObjective')]",
+            "collation": "[parameters('sqlDbCollation')]"
+          }
+        }
+      ]
+    },
+    //---------------------------------------------------------------------------
+    // Data Factory
+    //---------------------------------------------------------------------------
+    {
+      "apiVersion": "[parameters('datafactoryApiVersion')]",
+      "name": "[parameters('dataFactoryName')]",
+      "location": "[resourceGroup().location]",
+      "type": "Microsoft.DataFactory/dataFactories",
+      "properties": {}
+    },
+    //---------------------------------------------------------------------------
+    // Azure Automation Account
+    //
+    //   Refer to: https://github.com/azureautomation/automation-packs
+    //---------------------------------------------------------------------------
+    {
+      "name": "[parameters('automationAccountName')]",
+      "type": "Microsoft.Automation/automationAccounts",
+      "apiVersion": "2015-01-01-preview",
+      "location": "[parameters('automationLocation')]",
+      "dependsOn": [],
+      "tags": {},
+      "properties": {
+        "sku": {
+          "name": "[parameters('automationSku')]"
+        }
+      }
+    },
+    {
+      "name": "[parameters('vnetName')]",
+      "type": "Microsoft.Network/virtualNetworks",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "[parameters('vnetName')]"
+      },
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "[parameters('vnetPrefix')]"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[parameters('vnetSubnetName')]",
+            "properties": {
+              "addressPrefix": "[parameters('vnetSubnetPrefix')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[variables('windowsVmNicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-03-30",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('vnetName'))]"
+      ],
+      "tags": {
+        "displayName": "windowsVmNic"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "subnet": {
+                "id": "[variables('windowsVmSubnetRef')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "[parameters('windowsVmName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-06-15",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('windowsVmNicName'))]"
+      ],
+      "tags": {
+        "displayName": "windowsVm"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('windowsVmVmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('windowsVmName')]",
+          "adminUsername": "[parameters('windowsVmAdminUsername')]",
+          "adminPassword": "[parameters('windowsVmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('windowsVmImagePublisher')]",
+            "offer": "[variables('windowsVmImageOffer')]",
+            "sku": "[parameters('windowsVmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "windowsVmOSDisk",
+            "vhd": {
+              "uri": "[concat(reference(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), '2016-01-01').primaryEndpoints.blob, variables('windowsVmStorageAccountContainerName'), '/', variables('windowsVmOSDiskName'), '.vhd')]"
+            },
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('windowsVmNicName'))]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

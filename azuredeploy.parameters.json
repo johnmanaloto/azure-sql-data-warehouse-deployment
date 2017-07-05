@@ -1,0 +1,54 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "storageAccountName": {
+      "value": "str20170705"
+    },
+    "sqlserverName": {
+      "value": "sqlsvr-20170705"
+    },
+    "sqlserverAdminLogin": {
+      "value": "vmuser"
+    },
+    "sqlserverAdminLoginPassword": {
+      "value": "P@ssword1"
+    },
+    "sqlDbName": {
+      "value": "sqldb-20170705"
+    },
+    "sqlDWName": {
+      "value": "dw-20170705"
+    },
+    "dataFactoryName": {
+      "value": "adf-20170705"
+    },
+    "automationAccountName": {
+      "value": "auto-20170705"
+    },
+    "windowsVmName": {
+      "value": "vm-20170705"
+    },
+    "windowsVmAdminUserName": {
+      "value": "vmuser"
+    },
+    "windowsVmAdminPassword": {
+      "value": "P@ssword1"
+    },
+    "windowsVmVmSize": {
+      "value": "Standard_D2_V2"
+    },
+    "vnetName": {
+      "value": "vnet-20170705"
+    },
+    "vnetPrefix": {
+      "value": "192.0.0/16"
+    },
+    "vnetSubnetName": {
+      "value": "subnet-1"
+    },
+    "vnetSubnetPrefix": {
+      "value": "192.0.0.0/24"
+    }
+  }
+}
