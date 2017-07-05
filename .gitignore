@@ -6,6 +6,7 @@
 *.sln
 Deploy-AzureResourceGroup.ps1
 Deployment.targets
+local.parameters.json
 
 # User-specific files
 *.suo

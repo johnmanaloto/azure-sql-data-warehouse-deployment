@@ -3,43 +3,43 @@
   "contentVersion": "1.0.0.0",
   "parameters": {
     "storageAccountName": {
-      "value": "str20170705"
+      "value": "storageAccountName"
     },
     "sqlserverName": {
-      "value": "sqlsvr-20170705"
+      "value": "sqlserverName"
     },
     "sqlserverAdminLogin": {
-      "value": "vmuser"
+      "value": "sqlserverAdminLogin"
     },
     "sqlserverAdminLoginPassword": {
-      "value": "P@ssword1"
+      "value": "sqlserverAdminLoginPassword"
     },
     "sqlDbName": {
-      "value": "sqldb-20170705"
+      "value": "sqlDbName"
     },
     "sqlDWName": {
-      "value": "dw-20170705"
+      "value": "sqlDWName"
     },
     "dataFactoryName": {
-      "value": "adf-20170705"
+      "value": "dataFactoryName"
     },
     "automationAccountName": {
-      "value": "auto-20170705"
+      "value": "automationAccountName"
     },
     "windowsVmName": {
-      "value": "vm-20170705"
+      "value": "windowsVmName"
     },
     "windowsVmAdminUserName": {
-      "value": "vmuser"
+      "value": "windowsVmAdminUserName"
     },
     "windowsVmAdminPassword": {
-      "value": "P@ssword1"
+      "value": "windowsVmAdminPassword"
     },
     "windowsVmVmSize": {
-      "value": "Standard_D2_V2"
+      "value": "windowsVmVmSize"
     },
     "vnetName": {
-      "value": "vnet-20170705"
+      "value": "vnet"
     },
     "vnetPrefix": {
       "value": "192.0.0/16"
